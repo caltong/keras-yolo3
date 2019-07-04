@@ -105,7 +105,7 @@ class YOLO(object):
         return boxes, scores, classes
 
     def detect_image(self, image):
-        start = timer()
+        start = timer()  # 开始计时
 
         if self.model_image_size != (None, None):
             assert self.model_image_size[0] % 32 == 0, 'Multiples of 32 required'
@@ -167,8 +167,8 @@ class YOLO(object):
             draw.text(text_origin, label, fill=(0, 0, 0), font=font)
             del draw
 
-        end = timer()
-        print(end - start)
+        end = timer()  # 结束计时
+        print(end - start)  # 检测图片用时
         return image
 
     def close_session(self):
