@@ -72,34 +72,36 @@ class YOLO(object):
             self.yolo_model = tiny_yolo_body(Input(shape=(None, None, 3)), num_anchors // 2, num_classes) \
                 if is_tiny_version else yolo_body(Input(shape=(None, None, 3)), num_anchors // 3, num_classes)
             # 判断是否为tiny_version使用对于函数导入模型
-            # TODO: 不知为何yolo_body里面 num_anchors//3 不是//2
+            # TODO: 不知为何yolo_body里面 num_anchors//3 不是//2 这里的不同会导致下面assert判断中model.layers[-1].output_shape[-1]不同
             self.yolo_model.load_weights(self.model_path)  # make sure model, anchors and classes match
             # 使用load_weights导入权重
         else:
             assert self.yolo_model.layers[-1].output_shape[-1] == \
                    num_anchors / len(self.yolo_model.output) * (num_classes + 5), \
                 'Mismatch between model and given anchor and class sizes'
-
-        print('{} model, anchors, and classes loaded.'.format(model_path))
+            # assert判断model和给定的anchor class数量是否一致
+        print('{} model, anchors, and classes loaded.'.format(model_path))  # 输出model_path
 
         # Generate colors for drawing bounding boxes.
+        # 生产目标检测框的颜色
         hsv_tuples = [(x / len(self.class_names), 1., 1.)
                       for x in range(len(self.class_names))]
-        self.colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
+        self.colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))  # 通过colorsys.hsv_to_rgb产生多种颜色
         self.colors = list(
             map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)),
-                self.colors))
-        np.random.seed(10101)  # Fixed seed for consistent colors across runs.
-        np.random.shuffle(self.colors)  # Shuffle colors to decorrelate adjacent classes.
-        np.random.seed(None)  # Reset seed to default.
+                self.colors))  # 0-1转换成0-255
+        np.random.seed(10101)  # Fixed seed for consistent colors across runs. 随机种子10101
+        np.random.shuffle(self.colors)  # Shuffle colors to decorrelate adjacent classes. 随机打乱之前生成的颜色
+        np.random.seed(None)  # Reset seed to default. 重置随机种子
 
         # Generate output tensor targets for filtered bounding boxes.
-        self.input_image_shape = K.placeholder(shape=(2,))
+        self.input_image_shape = K.placeholder(shape=(2,))  # 定义input_image_shape为placeholder
         if self.gpu_num >= 2:
-            self.yolo_model = multi_gpu_model(self.yolo_model, gpus=self.gpu_num)
+            self.yolo_model = multi_gpu_model(self.yolo_model, gpus=self.gpu_num)  # 如果GPU数量大于等于2启用多GPU模型
         boxes, scores, classes = yolo_eval(self.yolo_model.output, self.anchors,
                                            len(self.class_names), self.input_image_shape,
                                            score_threshold=self.score, iou_threshold=self.iou)
+        # yolo3.model.yolo_eval函数
         return boxes, scores, classes
 
     def detect_image(self, image):
