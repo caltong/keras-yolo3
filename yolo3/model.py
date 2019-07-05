@@ -126,6 +126,7 @@ def tiny_yolo_body(inputs, num_anchors, num_classes):
 
 def yolo_head(feats, anchors, num_classes, input_shape, calc_loss=False):
     """Convert final layer features to bounding box parameters."""
+    # 将最后一层的特征转换成框选参数
     num_anchors = len(anchors)
     # Reshape to batch, height, width, num_anchors, box_params.
     anchors_tensor = K.reshape(K.constant(anchors), [1, 1, 1, num_anchors, 2])
