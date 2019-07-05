@@ -110,16 +110,17 @@ class YOLO(object):
         if self.model_image_size != (None, None):
             assert self.model_image_size[0] % 32 == 0, 'Multiples of 32 required'
             assert self.model_image_size[1] % 32 == 0, 'Multiples of 32 required'
-            boxed_image = letterbox_image(image, tuple(reversed(self.model_image_size)))
+            boxed_image = letterbox_image(image,
+                                          tuple(reversed(self.model_image_size)))  # yolo3.utils.letterbox_image压缩图片
         else:
             new_image_size = (image.width - (image.width % 32),
                               image.height - (image.height % 32))
             boxed_image = letterbox_image(image, new_image_size)
-        image_data = np.array(boxed_image, dtype='float32')
+        image_data = np.array(boxed_image, dtype='float32')  # 转换np.array
 
         print(image_data.shape)
-        image_data /= 255.
-        image_data = np.expand_dims(image_data, 0)  # Add batch dimension.
+        image_data /= 255.  # 转换成0-1
+        image_data = np.expand_dims(image_data, 0)  # Add batch dimension. expand_dims添加一个维度 axis=0 添加第一个维度
 
         out_boxes, out_scores, out_classes = self.sess.run(
             [self.boxes, self.scores, self.classes],
@@ -127,22 +128,22 @@ class YOLO(object):
                 self.yolo_model.input: image_data,
                 self.input_image_shape: [image.size[1], image.size[0]],
                 K.learning_phase(): 0
-            })
+            })  # 预测 获取框选 概率 类别
 
-        print('Found {} boxes for {}'.format(len(out_boxes), 'img'))
+        print('Found {} boxes for {}'.format(len(out_boxes), 'img'))  # 打印出框选
 
         font = ImageFont.truetype(font='font/FiraMono-Medium.otf',
-                                  size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
-        thickness = (image.size[0] + image.size[1]) // 300
+                                  size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))  # 字体字号设置
+        thickness = (image.size[0] + image.size[1]) // 300  # 粗细
 
-        for i, c in reversed(list(enumerate(out_classes))):
-            predicted_class = self.class_names[c]
-            box = out_boxes[i]
-            score = out_scores[i]
+        for i, c in reversed(list(enumerate(out_classes))):  # 遍历所有识别出的物体
+            predicted_class = self.class_names[c]  # 预测类别
+            box = out_boxes[i]  # 预测框选
+            score = out_scores[i]  # 预测概率
 
-            label = '{} {:.2f}'.format(predicted_class, score)
-            draw = ImageDraw.Draw(image)
-            label_size = draw.textsize(label, font)
+            label = '{} {:.2f}'.format(predicted_class, score)  # 标签
+            draw = ImageDraw.Draw(image)  # 画
+            label_size = draw.textsize(label, font)  # 标签尺寸
 
             top, left, bottom, right = box
             top = max(0, np.floor(top + 0.5).astype('int32'))
