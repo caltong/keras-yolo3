@@ -1,0 +1,17 @@
+traffic light
+fire hydrant
+stop sign
+parking meter
+chair
+sofa
+bed
+diningtable
+toilet
+tvmonitor
+microwave
+oven
+toaster
+sink
+refrigerator
+clock
+vase
